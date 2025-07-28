@@ -10,25 +10,35 @@ st.set_page_config(layout="wide") # Opcional: para usar a largura total da tela
 st.title("Análise de Regressão Linear: Valor Total do Imóvel vs Preço por m²")
 
 st.write("""
-Este aplicativo permite que você faça upload de um arquivo CSV contendo dados de imóveis para realizar uma análise de regressão linear.
+Este aplicativo permite que você faça upload de um arquivo CSV ou Excel (.xlsx) contendo dados de imóveis para realizar uma análise de regressão linear.
 O modelo tentará prever o 'Preço por m²' com base no 'Valor_Total' do imóvel.
 
-**Formato do arquivo CSV esperado:**
-O arquivo CSV deve conter pelo menos duas colunas:
+**Formato do arquivo esperado:**
+O arquivo (CSV ou Excel) deve conter pelo menos duas colunas:
 - `Valor_Total`: O valor total do imóvel (numérico).
 - `Preco_m2`: O preço por metro quadrado do imóvel (numérico).
 """)
 
-# Widget para upload de arquivo
-uploaded_file = st.file_uploader("Escolha um arquivo CSV", type="csv")
+# Widget para upload de arquivo - AGORA ACEITA CSV E EXCEL
+uploaded_file = st.file_uploader("Escolha um arquivo CSV ou Excel (.xlsx)", type=["csv", "xlsx"])
 
 if uploaded_file is not None:
     try:
-        df = pd.read_csv(uploaded_file)
+        # Detectar o tipo de arquivo pela extensão
+        file_extension = uploaded_file.name.split('.')[-1].lower()
+
+        if file_extension == "csv":
+            df = pd.read_csv(uploaded_file)
+        elif file_extension == "xlsx":
+            df = pd.read_excel(uploaded_file)
+        else:
+            st.error("Formato de arquivo não suportado. Por favor, faça upload de um arquivo CSV ou Excel (.xlsx).")
+            # st.stop() # Opcional: interrompe a execução aqui se o tipo for inválido
+            raise ValueError("Formato de arquivo inválido.")
 
         # Verificar se as colunas necessárias existem
         if "Valor_Total" not in df.columns or "Preco_m2" not in df.columns:
-            st.error("O arquivo CSV deve conter as colunas 'Valor_Total' e 'Preco_m2'.")
+            st.error("O arquivo deve conter as colunas 'Valor_Total' e 'Preco_m2'.")
         else:
             # Converter colunas para numérico, tratando erros
             df["Valor_Total"] = pd.to_numeric(df["Valor_Total"], errors='coerce')
@@ -82,7 +92,14 @@ if uploaded_file is not None:
                     plt.tight_layout()
                     st.pyplot(fig)
 
+    except ValueError as ve: # Captura o erro específico para formato de arquivo inválido
+        st.error(f"Erro de formato: {ve}")
     except Exception as e:
         st.error(f"Ocorreu um erro ao processar o arquivo: {e}")
 else:
-    st.info("Por favor, faça upload de um arquivo CSV para começar.")
+    st.info("Por favor, faça upload de um arquivo CSV ou Excel para começar.")
+
+st.markdown("---") # Adiciona uma linha horizontal para separar o conteúdo principal
+st.write("Desenvolvido por Patricia Gutierrez")
+# Ou, se quiser algo menor:
+# st.caption("Desenvolvido por [Seu Nome]")

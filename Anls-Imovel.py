@@ -5,101 +5,82 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_squared_error
 
-st.set_page_config(layout="wide") # Opcional: para usar a largura total da tela
+st.set_page_config(layout="wide")
 
 st.title("Análise de Regressão Linear: Valor Total do Imóvel vs Preço por m²")
 
 st.write("""
-Este aplicativo permite que você faça upload de um arquivo CSV ou Excel (.xlsx) contendo dados de imóveis para realizar uma análise de regressão linear.
-O modelo tentará prever o 'Preço por m²' com base no 'Valor_Total' do imóvel.
-
-**Formato do arquivo esperado:**
-O arquivo (CSV ou Excel) deve conter pelo menos duas colunas:
-- `Valor_Total`: O valor total do imóvel (numérico).
-- `Preco_m2`: O preço por metro quadrado do imóvel (numérico).
+Digite manualmente até 20 pares de dados para realizar uma análise de regressão linear.
+Cada linha representa um imóvel, com seu valor total e preço por metro quadrado.
 """)
 
-# Widget para upload de arquivo - AGORA ACEITA CSV E EXCEL
-uploaded_file = st.file_uploader("Escolha um arquivo CSV ou Excel (.xlsx)", type=["csv", "xlsx"])
+# Número de linhas para entrada manual (até 20)
+num_linhas = st.slider("Quantos imóveis você deseja inserir?", min_value=2, max_value=20, value=5)
 
-if uploaded_file is not None:
-    try:
-        # Detectar o tipo de arquivo pela extensão
-        file_extension = uploaded_file.name.split('.')[-1].lower()
+valores_totais = []
+precos_m2 = []
 
-        if file_extension == "csv":
-            df = pd.read_csv(uploaded_file)
-        elif file_extension == "xlsx":
-            df = pd.read_excel(uploaded_file)
-        else:
-            st.error("Formato de arquivo não suportado. Por favor, faça upload de um arquivo CSV ou Excel (.xlsx).")
-            # st.stop() # Opcional: interrompe a execução aqui se o tipo for inválido
-            raise ValueError("Formato de arquivo inválido.")
+st.subheader("Entrada de Dados Manual")
 
-        # Verificar se as colunas necessárias existem
-        if "Valor_Total" not in df.columns or "Preco_m2" not in df.columns:
-            st.error("O arquivo deve conter as colunas 'Valor_Total' e 'Preco_m2'.")
-        else:
-            # Converter colunas para numérico, tratando erros
-            df["Valor_Total"] = pd.to_numeric(df["Valor_Total"], errors='coerce')
-            df["Preco_m2"] = pd.to_numeric(df["Preco_m2"], errors='coerce')
+for i in range(num_linhas):
+    col1, col2 = st.columns(2)
+    with col1:
+        valor = st.number_input(f"Valor_Total do imóvel #{i+1} (R$)", key=f"valor_{i}")
+    with col2:
+        preco = st.number_input(f"Preço por m² do imóvel #{i+1} (R$)", key=f"preco_{i}")
+    
+    valores_totais.append(valor)
+    precos_m2.append(preco)
 
-            # Remover linhas com valores NaN após a conversão
-            df.dropna(subset=["Valor_Total", "Preco_m2"], inplace=True)
+# Converter para DataFrame
+df = pd.DataFrame({
+    "Valor_Total": valores_totais,
+    "Preco_m2": precos_m2
+})
 
-            if df.empty:
-                st.warning("Não há dados válidos nas colunas 'Valor_Total' e 'Preco_m2' após a limpeza.")
-            else:
-                st.subheader("Prévia dos dados carregados:")
-                st.dataframe(df.head())
+# Remover linhas com zeros (opcional)
+df = df[(df["Valor_Total"] > 0) & (df["Preco_m2"] > 0)]
 
-                # Separar X e Y
-                X = df[["Valor_Total"]]
-                y = df["Preco_m2"]
-
-                # Verificar se há dados suficientes para a regressão
-                if len(X) < 2:
-                    st.warning("São necessários pelo menos 2 pontos de dados para realizar a regressão linear.")
-                else:
-                    # Criar e treinar o modelo
-                    modelo = LinearRegression()
-                    modelo.fit(X, y)
-
-                    # Prever
-                    y_pred = modelo.predict(X)
-
-                    # Avaliar o modelo
-                    r2 = r2_score(y, y_pred)
-                    mse = mean_squared_error(y, y_pred)
-                    coef = modelo.coef_[0]
-                    intercepto = modelo.intercept_
-
-                    st.subheader("Resultados da Regressão Linear:")
-                    st.write(f"**Equação da reta:** $Preço\_m2 = {coef:.6f} \\times Valor\_Total + {intercepto:.2f}$")
-                    st.write(f"**R² (Coeficiente de Determinação):** ${r2:.4f}$")
-                    st.write(f"**MSE (Erro Quadrático Médio):** ${mse:.2f}$")
-
-                    # Gráfico
-                    st.subheader("Gráfico de Regressão Linear")
-                    fig, ax = plt.subplots(figsize=(10,6))
-                    ax.scatter(X, y, color='blue', label="Dados reais")
-                    ax.plot(X, y_pred, color='red', label="Regressão Linear")
-                    ax.set_xlabel("Valor Total do Imóvel (R$)")
-                    ax.set_ylabel("Preço por m² (R$)")
-                    ax.set_title("Regressão Linear: Valor Total vs Preço por m²")
-                    ax.legend()
-                    ax.grid(True)
-                    plt.tight_layout()
-                    st.pyplot(fig)
-
-    except ValueError as ve: # Captura o erro específico para formato de arquivo inválido
-        st.error(f"Erro de formato: {ve}")
-    except Exception as e:
-        st.error(f"Ocorreu um erro ao processar o arquivo: {e}")
+if df.shape[0] < 2:
+    st.warning("Insira pelo menos 2 imóveis com valores válidos (maiores que zero) para continuar.")
 else:
-    st.info("Por favor, faça upload de um arquivo CSV ou Excel para começar.")
+    st.subheader("Dados Inseridos")
+    st.dataframe(df)
 
-st.markdown("---") # Adiciona uma linha horizontal para separar o conteúdo principal
+    # Separar X e y
+    X = df[["Valor_Total"]]
+    y = df["Preco_m2"]
+
+    # Criar e treinar o modelo
+    modelo = LinearRegression()
+    modelo.fit(X, y)
+
+    # Prever
+    y_pred = modelo.predict(X)
+
+    # Avaliar o modelo
+    r2 = r2_score(y, y_pred)
+    mse = mean_squared_error(y, y_pred)
+    coef = modelo.coef_[0]
+    intercepto = modelo.intercept_
+
+    st.subheader("Resultados da Regressão Linear")
+    st.write(f"**Equação da reta:** $Preço\\_m2 = {coef:.6f} \\times Valor\\_Total + {intercepto:.2f}$")
+    st.write(f"**R² (Coeficiente de Determinação):** ${r2:.4f}$")
+    st.write(f"**MSE (Erro Quadrático Médio):** ${mse:.2f}$")
+
+    # Gráfico
+    st.subheader("Gráfico de Regressão Linear")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(X, y, color='blue', label="Dados reais")
+    ax.plot(X, y_pred, color='red', label="Regressão Linear")
+    ax.set_xlabel("Valor Total do Imóvel (R$)")
+    ax.set_ylabel("Preço por m² (R$)")
+    ax.set_title("Regressão Linear: Valor Total vs Preço por m²")
+    ax.legend()
+    ax.grid(True)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+st.markdown("---")
 st.write("Desenvolvido por Patricia Gutierrez")
-# Ou, se quiser algo menor:
-# st.caption("Desenvolvido por [Seu Nome]")

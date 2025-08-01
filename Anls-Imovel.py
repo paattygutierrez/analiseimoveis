@@ -78,17 +78,20 @@ if 'X' in locals() and X is not None and len(X) >= 2:
     intercepto = modelo.intercept_
     r2 = r2_score(y, y_pred)
     mse = mean_squared_error(y, y_pred)
+    valor_medio_m2 = y.mean()
 
     st.markdown(f"**Equação da reta:** `Preço_m2 = {coef:.4f} × Valor_Total + {intercepto:.2f}`")
     st.markdown(f"- **R²:** {r2:.4f}")
     st.markdown(f"- **MSE:** {mse:.2f}")
+    st.markdown(f"- **Valor médio do metro quadrado:** R$ {valor_medio_m2:,.2f}")
 
     # Exportar resultados
     resultados = pd.DataFrame({
         "Coeficiente": [coef],
         "Intercepto": [intercepto],
         "R²": [r2],
-        "MSE": [mse]
+        "MSE": [mse],
+        "Valor médio do m²": [valor_medio_m2]
     })
 
     buffer = BytesIO()

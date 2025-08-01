@@ -94,13 +94,13 @@ if 'X' in locals() and X is not None and len(X) >= 2:
         "Valor médio do m²": [valor_medio_m2]
     })
 
-        buffer = BytesIO()
+    buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
         resultados.to_excel(writer, sheet_name='Resultados', index=False)
         df.to_excel(writer, sheet_name='Dados', index=False)
-        writer.save()
+    buffer.seek(0)
 
-       st.download_button(
+    st.download_button(
         "📥 Baixar Resultados (.xlsx)",
         data=buffer.getvalue(),
         file_name="regressao_resultados.xlsx",
@@ -113,10 +113,21 @@ if 'X' in locals() and X is not None and len(X) >= 2:
     df_grafico["Preço_real_m2"] = y
     df_grafico["Preço_previsto_m2"] = y_pred
 
-    fig = px.scatter(df_grafico, x=df_grafico.columns[0], y="Preço_real_m2", labels={"Preço_real_m2": "Preço por m² (real)"}, title="Regressão Linear")
-    fig.add_scatter(x=df_grafico[df_grafico.columns[0]], y=df_grafico["Preço_previsto_m2"], mode="lines", name="Regressão Linear", line=dict(color="red"))
+    fig = px.scatter(
+        df_grafico,
+        x=df_grafico.columns[0],
+        y="Preço_real_m2",
+        labels={"Preço_real_m2": "Preço por m² (real)"},
+        title="Regressão Linear"
+    )
+    fig.add_scatter(
+        x=df_grafico[df_grafico.columns[0]],
+        y=df_grafico["Preço_previsto_m2"],
+        mode="lines",
+        name="Regressão Linear",
+        line=dict(color="red")
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
 st.write("💻 Desenvolvido por Patricia Gutierrez")
-

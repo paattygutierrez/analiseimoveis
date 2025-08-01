@@ -3,3 +3,9 @@ pandas
 numpy
 scikit-learn
 matplotlib
+streamlit
+pandas
+numpy
+scikit-learn
+plotly
+xlsxwriter

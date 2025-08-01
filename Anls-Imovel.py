@@ -31,36 +31,36 @@ if modo == "📄 Upload de CSV":
         if len(colunas_numericas) < 2:
             st.error("O arquivo precisa ter pelo menos duas colunas numéricas.")
         else:
-            col_x = st.selectbox("Escolha a variável independente (X):", colunas_numericas)
-            col_y = st.selectbox("Escolha a variável dependente (y):", [col for col in colunas_numericas if col != col_x])
+            col_x = st.selectbox("Escolha a variável independente (X - Ex: Valor Total):", colunas_numericas)
+            col_y = st.selectbox("Escolha a variável dependente (Y - Ex: Preço por m²):", [col for col in colunas_numericas if col != col_x])
 
             X = df[[col_x]]
             y = df[col_y]
 
 elif modo == "✍️ Entrada Manual":
     st.subheader("Entrada de Dados Manual")
-    num_linhas = st.slider("Quantos pares de dados você deseja inserir?", min_value=2, max_value=20, value=5)
+    num_linhas = st.slider("Quantos imóveis você deseja inserir?", min_value=2, max_value=20, value=5)
 
-    valores_x = []
-    valores_y = []
+    valores_total = []
+    precos_m2 = []
 
     for i in range(num_linhas):
         col1, col2 = st.columns(2)
         with col1:
-            x = st.number_input(f"Valor de X #{i+1}", key=f"x_{i}")
+            valor = st.number_input(f"Valor Total do Imóvel #{i+1} (R$)", key=f"x_{i}")
         with col2:
-            y_val = st.number_input(f"Valor de y #{i+1}", key=f"y_{i}")
-        valores_x.append(x)
-        valores_y.append(y_val)
+            preco = st.number_input(f"Preço por m² do Imóvel #{i+1} (R$)", key=f"y_{i}")
+        valores_total.append(valor)
+        precos_m2.append(preco)
 
     df = pd.DataFrame({
-        "X": valores_x,
-        "y": valores_y
+        "Valor_Total_do_Imovel": valores_total,
+        "Preco_por_m2": precos_m2
     })
-    df = df[(df["X"] > 0) & (df["y"] > 0)]
+    df = df[(df["Valor_Total_do_Imovel"] > 0) & (df["Preco_por_m2"] > 0)]
     if df.shape[0] >= 2:
-        X = df[["X"]]
-        y = df["y"]
+        X = df[["Valor_Total_do_Imovel"]]
+        y = df["Preco_por_m2"]
     else:
         st.warning("Insira pelo menos 2 pares de valores maiores que zero para continuar.")
         X = None
@@ -79,7 +79,7 @@ if 'X' in locals() and X is not None and len(X) >= 2:
     r2 = r2_score(y, y_pred)
     mse = mean_squared_error(y, y_pred)
 
-    st.markdown(f"**Equação da reta:** `y = {coef:.4f} × x + {intercepto:.2f}`")
+    st.markdown(f"**Equação da reta:** `Preço_m2 = {coef:.4f} × Valor_Total + {intercepto:.2f}`")
     st.markdown(f"- **R²:** {r2:.4f}")
     st.markdown(f"- **MSE:** {mse:.2f}")
 
@@ -101,11 +101,11 @@ if 'X' in locals() and X is not None and len(X) >= 2:
     # Gráfico com Plotly
     st.subheader("📊 Gráfico de Dispersão com Regressão")
     df_grafico = X.copy()
-    df_grafico["y_real"] = y
-    df_grafico["y_pred"] = y_pred
+    df_grafico["Preço_real_m2"] = y
+    df_grafico["Preço_previsto_m2"] = y_pred
 
-    fig = px.scatter(df_grafico, x=df_grafico.columns[0], y="y_real", labels={"y_real": "y"}, title="Regressão Linear")
-    fig.add_scatter(x=df_grafico[df_grafico.columns[0]], y=df_grafico["y_pred"], mode="lines", name="Regressão Linear", line=dict(color="red"))
+    fig = px.scatter(df_grafico, x=df_grafico.columns[0], y="Preço_real_m2", labels={"Preço_real_m2": "Preço por m² (real)"}, title="Regressão Linear")
+    fig.add_scatter(x=df_grafico[df_grafico.columns[0]], y=df_grafico["Preço_previsto_m2"], mode="lines", name="Regressão Linear", line=dict(color="red"))
     st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")

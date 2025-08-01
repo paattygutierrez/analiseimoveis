@@ -94,12 +94,18 @@ if 'X' in locals() and X is not None and len(X) >= 2:
         "Valor médio do m²": [valor_medio_m2]
     })
 
-    buffer = BytesIO()
+        buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
         resultados.to_excel(writer, sheet_name='Resultados', index=False)
         df.to_excel(writer, sheet_name='Dados', index=False)
         writer.save()
-    st.download_button("📥 Baixar Resultados (.xlsx)", data=buffer.getvalue(), file_name="regressao_resultados.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+       st.download_button(
+        "📥 Baixar Resultados (.xlsx)",
+        data=buffer.getvalue(),
+        file_name="regressao_resultados.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
     # Gráfico com Plotly
     st.subheader("📊 Gráfico de Dispersão com Regressão")
@@ -113,3 +119,4 @@ if 'X' in locals() and X is not None and len(X) >= 2:
 
 st.markdown("---")
 st.write("💻 Desenvolvido por Patricia Gutierrez")
+
